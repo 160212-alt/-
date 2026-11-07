@@ -117,8 +117,6 @@ with tab1:
     주관적 건강수준 인지율도 높게 나타날 것이다.
     """)
 
-    
-
 
 # ==========================================
 # TAB 2. 데이터 분석
@@ -176,8 +174,13 @@ with tab2:
 
     st.divider()
 
+    # ==========================================
+    # ④ 의사 수와 건강수준의 관계 (산점도 개선)
+    # ==========================================
+
     st.subheader("④ 의사 수와 건강수준의 관계")
 
+    # 피어슨 상관계수 계산
     corr = df[doctor].corr(df[health])
 
     st.metric(
@@ -185,16 +188,66 @@ with tab2:
         f"{corr:.3f}"
     )
 
+    # 산점도 생성
     fig3 = px.scatter(
         df,
         x=doctor,
         y=health,
         text="지역",
-        title="의사 수와 건강수준의 관계"
+        title="의사 수와 건강수준의 관계 및 선형회귀 추세선",
+        labels={
+            doctor: "인구 1만 명당 의사 수",
+            health: "주관적 건강수준 인지율(%)"
+        }
     )
 
+    # 지역 이름 표시
     fig3.update_traces(
-        textposition="top center"
+        textposition="top center",
+        marker=dict(size=13),
+        name="지역별 실제 데이터"
+    )
+
+    # ==========================================
+    # 선형회귀 추세선 추가
+    # ==========================================
+
+    x = df[doctor].values
+    y = df[health].values
+
+    # 선형회귀 계수 계산
+    slope, intercept = np.polyfit(x, y, 1)
+
+    # 추세선을 그리기 위한 X값 생성
+    x_line = np.linspace(
+        x.min(),
+        x.max(),
+        100
+    )
+
+    # 추세선의 Y값 계산
+    y_line = slope * x_line + intercept
+
+    # 그래프에 추세선 추가
+    fig3.add_trace(
+        go.Scatter(
+            x=x_line,
+            y=y_line,
+            mode="lines",
+            name="선형회귀 추세선",
+            line=dict(
+                color="red",
+                width=3
+            )
+        )
+    )
+
+    # 그래프 세부 설정
+    fig3.update_layout(
+        xaxis_title="인구 1만 명당 의사 수",
+        yaxis_title="주관적 건강수준 인지율(%)",
+        legend_title="그래프 구분",
+        hovermode="closest"
     )
 
     st.plotly_chart(
@@ -202,7 +255,41 @@ with tab2:
         use_container_width=True
     )
 
-   
+    # 상관관계 해석
+    st.subheader("산점도 분석 결과")
+
+    st.write(
+        f"피어슨 상관계수는 {corr:.3f}이며, "
+        "두 변수 사이의 선형적인 관계를 나타냅니다."
+    )
+
+    st.write(
+        f"선형회귀 추세선의 기울기는 {slope:.3f}입니다."
+    )
+
+    if corr > 0:
+        st.info(
+            "현재 데이터에서는 의사 수가 많을수록 "
+            "주관적 건강수준 인지율도 높아지는 양의 상관관계가 나타납니다."
+        )
+
+    elif corr < 0:
+        st.info(
+            "현재 데이터에서는 의사 수가 많을수록 "
+            "주관적 건강수준 인지율이 낮아지는 음의 상관관계가 나타납니다."
+        )
+
+    else:
+        st.info(
+            "현재 데이터에서는 두 변수 사이에 "
+            "뚜렷한 선형 상관관계가 나타나지 않습니다."
+        )
+
+    st.caption(
+        "주의: 현재 데이터는 서울, 인천, 경기 3개 지역만 포함하므로 "
+        "상관관계와 추세선을 일반적인 결론으로 해석하기 어렵습니다."
+    )
+
 
 # ==========================================
 # TAB 3. 기준선 모델
@@ -526,11 +613,7 @@ with tab4:
     분류는 건강수준을 범주로 나누는 별도 설계가 필요하고,
     군집은 지역을 비슷한 특성끼리 묶는 별도 탐색 분석입니다.
 
-    현재 3개 지역만으로는 이 두 방법의 결과를 신뢰성 있게
-    평가하기 어렵기 때문에 실제 모델을 실행하지 않습니다.
-    """)
 
-    
 
 
 # ==========================================
